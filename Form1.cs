@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+using NodaTime;
 
 namespace TradesViewer
 {
@@ -9,12 +12,31 @@ namespace TradesViewer
     {
         private readonly DataTable _table = new DataTable();
 
+        private readonly string[] _months = new[]
+        {
+            "January", "February", "March", "April",
+            "May", "June", "July", "August", "September",
+            "October", "November", "December"
+        };
+
         public Form1()
         {
             InitializeComponent();
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+            BuildColumns();
+
+            dgTradeView.DataSource = _table;
+
+            foreach (DataGridViewColumn column in dgTradeView.Columns)
+            {
+                column.HeaderText = _table.Columns[column.HeaderText].Caption;
+            }
+        }
+
+        private void BuildColumns()
         {
             DataColumn assetColumn = _table.Columns.Add("Asset", typeof(string));
             assetColumn.Caption = "Asset";
@@ -34,18 +56,26 @@ namespace TradesViewer
             DataColumn averagePercentLossesColumn = _table.Columns.Add("AveragePercentLosses", typeof(decimal));
             averagePercentLossesColumn.Caption = "Avg Percent Losses";
 
-            dgTradeView.DataSource = _table;
+            TimeSpan oneYear = new TimeSpan(365, 0, 0, 0);
+            MonthIterator months = new MonthIterator(DateTime.Now.Subtract(oneYear));
 
-            foreach (DataGridViewColumn column in dgTradeView.Columns)
+            int i = 0;
+            foreach (DateTime dateTime in months)
             {
-                column.HeaderText = _table.Columns[column.HeaderText].Caption;
+                string heading = _months[dateTime.Month - 1] + " " + dateTime.Year;
+                DataColumn currentMonthColumn = new DataColumn("month" + i++)
+                {
+                    Caption = heading,
+                    DataType = typeof(int)
+                };
+                _table.Columns.Add(currentMonthColumn);
             }
         }
 
         private void loadFromToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _table.Clear();
-            
+
             using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
             {
                 DialogResult result = folderBrowserDialog.ShowDialog();
@@ -57,18 +87,25 @@ namespace TradesViewer
                     foreach (string path in filePaths)
                     {
                         TradeHistory tradeHistory = ProcessFile(path);
-                        
+
                         AssetSummary assetSummary = tradeHistory.GetSummary();
-                        
-                        _table.Rows.Add(
-                            assetSummary.Asset, 
-                            assetSummary.NumberOfTrades, 
-                            assetSummary.AverageWinPercentage, 
-                            assetSummary.NumberOfTradesOverTenPercent, 
-                            assetSummary.AveragePercentGainOverTenPercent, 
-                            assetSummary.NumberOfWins, 
-                            assetSummary.NumberOfLosses, 
-                            assetSummary.AverageLosingPercent);
+
+                        object[] rowData = {
+                            assetSummary.Asset,
+                            assetSummary.NumberOfTrades,
+                            assetSummary.AverageWinPercentage,
+                            assetSummary.NumberOfTradesOverTenPercent,
+                            assetSummary.AveragePercentGainOverTenPercent,
+                            assetSummary.NumberOfWins,
+                            assetSummary.NumberOfLosses,
+                            assetSummary.AverageLosingPercent
+                        };
+
+                        object[] row = new object[rowData.Length + assetSummary.NumberInMonth.Length];
+                        rowData.CopyTo(row, 0);
+                        assetSummary.NumberInMonth.CopyTo(row, rowData.Length);
+
+                        _table.Rows.Add(row);
                     }
                 }
             }

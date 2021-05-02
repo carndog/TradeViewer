@@ -37,6 +37,20 @@ namespace TradesViewer
             summary.AverageLosingPercent = Math.Round(summary.AverageLosingPercent, 2);
             summary.AveragePercentGainOverTenPercent = Math.Round(summary.AveragePercentGainOverTenPercent, 2);
 
+            summary.NumberInMonth = new int[12];
+
+            TimeSpan oneYear = new TimeSpan(365, 0, 0, 0);
+            MonthIterator months = new MonthIterator(DateTime.Now.Subtract(oneYear));
+
+            int i = 0;
+            foreach (DateTime dateTime in months)
+            {
+                int count = _closedTrades.Count(x =>
+                    x.DateOpened.Month == dateTime.Month && x.DateOpened.Year == dateTime.Year);
+                summary.NumberInMonth[i] = count;
+                i++;
+            }
+
             return summary;
         }
 
@@ -67,7 +81,7 @@ namespace TradesViewer
                             Percentage = change
                         };
 
-                        if (_closedTrades.All(x => x.Open != open))
+                        if (_closedTrades.All(x => x.DateOpened != closedTrade.DateOpened))
                         {
                             _closedTrades.Add(closedTrade);
                         }

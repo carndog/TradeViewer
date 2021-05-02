@@ -17,5 +17,7 @@
         public int NumberOfLosses { get; set; }
         
         public decimal AverageLosingPercent { get; set; }
+        
+        public int[] NumberInMonth { get; set; }
     }
 }
