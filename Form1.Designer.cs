@@ -100,8 +100,6 @@
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadFromToolStripMenuItem;
 
-        private System.Windows.Forms.DataGridView dataGridView1;
-
         #endregion
     }
 }

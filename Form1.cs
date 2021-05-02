@@ -7,7 +7,7 @@ namespace TradesViewer
 {
     public partial class Form1 : Form
     {
-        private DataTable _table = new DataTable();
+        private readonly DataTable _table = new DataTable();
 
         public Form1()
         {
@@ -44,6 +44,8 @@ namespace TradesViewer
 
         private void loadFromToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            _table.Clear();
+            
             using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
             {
                 DialogResult result = folderBrowserDialog.ShowDialog();
@@ -55,7 +57,9 @@ namespace TradesViewer
                     foreach (string path in filePaths)
                     {
                         TradeHistory tradeHistory = ProcessFile(path);
+                        
                         AssetSummary assetSummary = tradeHistory.GetSummary();
+                        
                         _table.Rows.Add(
                             assetSummary.Asset, 
                             assetSummary.NumberOfTrades, 
@@ -72,14 +76,20 @@ namespace TradesViewer
 
         private static TradeHistory ProcessFile(string path)
         {
-            if (GetAssetNameFromPath(path, out string asset)) return null;
+            if (!GetAssetNameFromPath(path, out string asset))
+            {
+                return null;
+            }
 
             TradeHistory history = new TradeHistory(asset);
 
             using (StreamReader reader = new StreamReader(path))
             {
-                string line = reader.ReadLine();
-                history.ParseTrade(line);
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+                    history.ParseTrade(line);
+                }
             }
 
             return history;

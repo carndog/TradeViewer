@@ -19,6 +19,24 @@ namespace TradesViewer
         {
             AssetSummary summary = new AssetSummary();
 
+            summary.Asset = Asset;
+            summary.NumberOfTrades = _closedTrades.Count;
+            
+            IEnumerable<ClosedTrade> winningTrades = _closedTrades.Where(x => x.Percentage > 0).ToList();
+            IEnumerable<ClosedTrade> losingTrades = _closedTrades.Where(x => x.Percentage < 0).ToList();
+            IEnumerable<ClosedTrade> winsOverTenPercent = _closedTrades.Where(x => x.Percentage >= 10).ToList();
+            
+            summary.AverageWinPercentage = !winningTrades.Any() ? 0 : winningTrades.Average(x => x.Percentage);
+            summary.AverageLosingPercent = !losingTrades.Any() ? 0 : losingTrades.Average(x => x.Percentage);
+            summary.NumberOfLosses = losingTrades.Count();
+            summary.NumberOfWins = winningTrades.Count();
+            summary.AveragePercentGainOverTenPercent = !winsOverTenPercent.Any() ? 0 : winsOverTenPercent.Average(x => x.Percentage);
+            summary.NumberOfTradesOverTenPercent = winsOverTenPercent.Count();
+
+            summary.AverageWinPercentage = Math.Round(summary.AverageWinPercentage, 2);
+            summary.AverageLosingPercent = Math.Round(summary.AverageLosingPercent, 2);
+            summary.AveragePercentGainOverTenPercent = Math.Round(summary.AveragePercentGainOverTenPercent, 2);
+
             return summary;
         }
 
